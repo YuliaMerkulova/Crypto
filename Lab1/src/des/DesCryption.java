@@ -1,14 +1,6 @@
 package des;
 
-public
- class FeistelFunction implements Cryption {
-    DesKeyExpansion expansion;
-    DesEncrypt encrypt;
-
-    public FeistelFunction(KeyExpansion expansion, Encrypt encrypt) {
-
-    }
-
+public class DesCryption implements  Cryption{
     @Override
     public byte[] encrypt(byte[] array) {
         return new byte[0];
@@ -21,6 +13,7 @@ public
 
     @Override
     public byte[][] setRoundKeys(byte[] key) {
+
         return new byte[0][];
     }
 }

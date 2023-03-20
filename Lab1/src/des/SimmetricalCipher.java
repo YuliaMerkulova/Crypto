@@ -1,12 +1,14 @@
 package des;
 
 public abstract class SimmetricalCipher {
+
     private byte[] key;
     ModesCipher mode;
-    public SimmetricalCipher(byte[] key, ModesCipher mode, int vector){
+    protected SimmetricalCipher(byte[] key, ModesCipher mode, int vector){
         this.key = key;
         this.mode = mode;
-    };
-    public abstract void encryptData();
-    public abstract void decryptData();
+    }
+
+    public abstract void encryptData(byte[] array, byte[] resArray);
+    public abstract void decryptData(byte[] array, byte[] resArray);
 }
