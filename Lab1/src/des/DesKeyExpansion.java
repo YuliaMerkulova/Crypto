@@ -10,75 +10,42 @@ public class DesKeyExpansion implements KeyExpansion{
         byte[] resKey;
         byte[][] roundKeys = new byte[16][6];
         resKey = permutationBits(key, forKeyExpansion);
+//        System.out.println("leftKey " + Integer.toBinaryString(resKey[0] & 0xff) +" " + Integer.toBinaryString(resKey[1]& 0xff)
+//                + " "+Integer.toBinaryString(resKey[2]& 0xff) + " " + Integer.toBinaryString(resKey[3]& 0xff) + " " + Integer.toBinaryString(resKey[4]& 0xff)
+//                + " " + Integer.toBinaryString(resKey[5]& 0xff) + " " + Integer.toBinaryString(resKey[6]& 0xff));
+        //System.out.println("in key exp reskey: " + resKey.length);
         byte[] leftHalf = getBits(resKey, 0, 28);
-        byte[] rightHalf = getBits(resKey, 29, 28);
+//        System.out.println("leftKey " + Integer.toBinaryString(leftHalf[0] & 0xff) +" " + Integer.toBinaryString(leftHalf[1]& 0xff)
+//                + " "+Integer.toBinaryString(leftHalf[2]& 0xff) + " " + Integer.toBinaryString(leftHalf[3]& 0xff));
+        //System.out.println("in key exp left: " + leftHalf.length);
+        byte[] rightHalf = getBits(resKey, 28, 28);
+//        System.out.println("rightKey " + Integer.toBinaryString(rightHalf[0] & 0xff) +" " + Integer.toBinaryString(rightHalf[1]& 0xff)
+//                + " "+Integer.toBinaryString(rightHalf[2]& 0xff) + " " + Integer.toBinaryString(rightHalf[3]& 0xff));
         for(int i = 0; i < 16; i++)
         {
-            if (i == 0 || i == 1 || i == 15){
-                System.out.println();
-                System.out.println("lbeforeshift");
-                for (byte b : leftHalf) {
-                    System.out.print(String.format("%x", b));
-                }
-                System.out.println();
+            if (i == 0 || i == 1 || i == 15) {
                 leftHalf = shiftArray(leftHalf, 1, i);
-                System.out.println("laftershift");
-                for (byte b : leftHalf) {
-                    System.out.print(String.format("%x", b));
-                }
-                System.out.println();
-                System.out.println("rbeforeshift");
-                for (byte b : rightHalf) {
-                    System.out.print(String.format("%x", b));
-                }
-                System.out.println();
+//                System.out.println("leftKeyAfterShift " + Integer.toBinaryString(leftHalf[0] & 0xff) +" " + Integer.toBinaryString(leftHalf[1]& 0xff)
+//                        + " "+Integer.toBinaryString(leftHalf[2]& 0xff) + " " + Integer.toBinaryString(leftHalf[3]& 0xff));
                 rightHalf = shiftArray(rightHalf, 1, i);
-                System.out.println("raftershift");
-                for (byte b : rightHalf) {
-                    System.out.print(String.format("%x", b));
-                }
-                System.out.println();
-            } else{
-                System.out.println();
-                System.out.println("lbeforeshift");
-                for (byte b : leftHalf) {
-                    System.out.print(String.format("%x", b));
-                }
-                System.out.println();
+            } else {
                 leftHalf = shiftArray(leftHalf, 2, i);
-                System.out.println("laftershift");
-                for (byte b : leftHalf) {
-                    System.out.print(String.format("%x", b));
-                }
-                System.out.println();
-                System.out.println("rbeforeshift");
-                for (byte b : rightHalf) {
-                    System.out.print(String.format("%x", b));
-                }
-                System.out.println();
                 rightHalf = shiftArray(rightHalf, 2, i);
-                System.out.println("raftershift:");
-                for (byte b : rightHalf) {
-                    System.out.print(String.format("%x", b));
-                }
             }
-
             roundKeys[i] = getKey(leftHalf, rightHalf, PC2);
         }
         return roundKeys;
     }
     public byte[] shiftArray(byte[] array, int shift, int r){
-        //System.out.println("here0");
+//        System.out.println("arrayForShift " + Integer.toBinaryString(array[0] & 0xff) +" " + Integer.toBinaryString(array[1]& 0xff)
+//                + " "+Integer.toBinaryString(array[2]& 0xff) + " " + Integer.toBinaryString(array[3]& 0xff));
         BigInteger bigInt = new BigInteger(array);
-        //System.out.println("here1" + bigInt.intValue());
         int shiftInt = bigInt.intValue();
         if (r == 0) shiftInt = shiftInt >>> 4;
-       //System.out.println("shift" + String.format("%x", shiftInt));
-        //System.out.println("here11");
-        shiftInt = ((shiftInt << shift) | (shiftInt >>> (32 - shift)));
-        //System.out.println("here2");
+//        shiftInt = shiftInt >>> 4;
+        shiftInt = ((shiftInt << shift) & 268435455) | (shiftInt >>> (28 - shift));
+//        shiftInt = ((shiftInt << shift) | (shiftInt >>> (28 - shift)));
         ByteBuffer buf = ByteBuffer.allocate(4);
-        //System.out.println("here3");
         buf.putInt(shiftInt);
         return buf.array();
     }
@@ -88,8 +55,8 @@ public class DesKeyExpansion implements KeyExpansion{
             int pos = permute[i] - 1;
             int bit;
             if (pos <= 27)
-                bit = getBitFromArray(left, pos);
-            else bit = getBitFromArray(right, pos - 27);
+                bit = getBitFromArray(left, pos + 4);
+            else bit = getBitFromArray(right, pos - 28 + 4);
             setBitIntoArray(resKey, i, bit);
         }
         return resKey;

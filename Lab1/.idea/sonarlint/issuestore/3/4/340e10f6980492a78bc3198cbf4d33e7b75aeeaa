@@ -1,0 +1,25 @@
+
+n	java:S117€"QRename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(ù£ù«8É¹àùñ0
+X	java:S125o"<This block of commented-out lines of code should be removed.(­ß¢„8ðžûñ0
+Y	java:S125‚"<This block of commented-out lines of code should be removed.(¾™ƒ«8§Àôúñ0
+[	java:S106‹"9Replace this use of System.out or System.err by a logger.(±‚”ìþÿÿÿÿ8—éüúñ0
+S
+java:S1854´"5Remove this useless assignment to local variable "a".(«˜çÓ8«Àôúñ0
+U
+java:S1854¨"7Remove this useless assignment to local variable "key".(ðƒ¿È8­Àôúñ0
+F
+java:S1481¨"(Remove this unused "key" local variable.(ðƒ¿È8­Àôúñ0
+Y	java:S125¯"<This block of commented-out lines of code should be removed.(öò“™8°Àôúñ0
+D
+java:S1481´"&Remove this unused "a" local variable.(«˜çÓ8°Àôúñ0
+Y	java:S125µ"<This block of commented-out lines of code should be removed.(âäÁô8²Àôúñ0
+N
+java:S1128"1Remove this unused import 'java.math.BigInteger'.(»Çâ€8‚ºàùñ0
+R
+java:S1128"0Remove this unused import 'java.nio.ByteBuffer'.(¿¢×±úÿÿÿÿ8ƒºàùñ0
+P
+java:S1128".Remove this unused import 'java.security.Key'.(ÞÃ“úÿÿÿÿ8ƒºàùñ0
+O
+java:S1128"-Remove this unused import 'java.util.Arrays'.(î–˜Éüÿÿÿÿ8ƒºàùñ0
+Q
+java:S1128"4Remove this unused import 'java.util.stream.Stream'.(ó÷Ž”8ƒºàùñ0
