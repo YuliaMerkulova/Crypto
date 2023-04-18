@@ -136,7 +136,7 @@ public class MainClass {
     public static byte[] getBits(byte[] array, int startPos, int length){
         int numBytes = length / 8 + 1;
         byte[] resArray = new byte[numBytes];
-        System.out.println("in get bits: " + array.length);
+        //System.out.println("in get bits: " + array.length);
         for (int i = 0; i < length; i++) {
             int value = getBitFromArray(array, startPos + i);
             setBitIntoArray(resArray, i, value);
