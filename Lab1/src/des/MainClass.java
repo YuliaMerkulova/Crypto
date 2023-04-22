@@ -4,6 +4,9 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.Key;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 public class MainClass {
@@ -108,7 +111,6 @@ public class MainClass {
         for (int i = 0; i < pPermutationBlock.length; i++){
             int pos = pPermutationBlock[i] - 1;
             int bit = getBitFromArray(array, pos);
-            //System.out.println("num: " + pPermutationBlock[i] + "bit: " + bit);
             setBitIntoArray(resArray, i, bit);
         }
         return resArray;
@@ -127,7 +129,6 @@ public class MainClass {
     }
     public static byte replaceWithSbox(byte oldByte, int[] Sbox){
         byte newByte;
-        //System.out.println("old:" + oldByte);
         int row = (((oldByte >>> 5)& 1) << 1) | (oldByte & 1);
         int col = (oldByte >>> 1) & 0xf;
         newByte = (byte)Sbox[row * 16 + col];
@@ -136,7 +137,6 @@ public class MainClass {
     public static byte[] getBits(byte[] array, int startPos, int length){
         int numBytes = length / 8 + 1;
         byte[] resArray = new byte[numBytes];
-        //System.out.println("in get bits: " + array.length);
         for (int i = 0; i < length; i++) {
             int value = getBitFromArray(array, startPos + i);
             setBitIntoArray(resArray, i, value);
@@ -144,41 +144,21 @@ public class MainClass {
         return resArray;
     }
 
+    public static void generateVec(byte [] buffer){
+        for (int i = 0; i < buffer.length; i++)
+            buffer[i] = (byte)(Math.random() * 256);
+    }
+
     public static void main(String[] args){
         byte[] array = new byte[8];
-        array[0] = (byte) 0b1010_1010;
-        array[1] = (byte) 0b1011_1011;
-        array[2] = (byte) 0b0000_1001;
-        array[3] = (byte) 0b0001_1000;
-        array[4] = (byte) 0b0010_0111;
-        array[5] = (byte) 0b0011_0110;
-        array[6] = (byte) 0b1100_1100;
-        array[7] = (byte) 0b1101_1101;
-
+        generateVec(array);
         byte[] arrayData = new byte[8];
-        arrayData[0] = (byte) 0b1101_0000;
-        arrayData[1] = (byte) 0b1010_0101;
-        arrayData[2] = (byte) 0b1001_1010;
-        arrayData[3] = (byte) 0b1010_1001;
-        arrayData[4] = (byte) 0b1001_1111;
-        arrayData[5] = (byte) 0b1000_1111;
-        arrayData[6] = (byte) 0b1111_0000;
-        arrayData[7] = (byte) 0b1000_1110;
+        generateVec(arrayData);
 
-        DesKeyExpansion key = new DesKeyExpansion();
-
-        var symmetricalCipher = new SimmetricalCipher(array, ModesCipher.RD, array, new FeistelFunction(new DesKeyExpansion(), new DesEncrypt()));
+        var symmetricalCipher = new SimmetricalCipher(array, ModesCipher.RDH, arrayData, new FeistelFunction(new DesKeyExpansion(), new DesEncrypt()));
 
         symmetricalCipher.encryptData("D:\\6sem\\Crypto\\Lab1\\src\\des\\diagram.png", "D:\\6sem\\Crypto\\Lab1\\src\\des\\out3");
         symmetricalCipher.decryptData("D:\\6sem\\Crypto\\Lab1\\src\\des\\out3", "D:\\6sem\\Crypto\\Lab1\\src\\des\\out4");
 
-        //DesKeyExpansion desKeyExpansion = new DesKeyExpansion();
-       // desKeyExpansion.keyExpansion(array);
-        //byte[] newarray = permutationBitsP(array, pPermutationBlock, 32);
-        //System.out.println(Integer.toBinaryString(newarray[0] & 0xff) +" " + Integer.toBinaryString(newarray[1]& 0xff)
-        //+ " "+Integer.toBinaryString(newarray[2]& 0xff) + " " + Integer.toBinaryString(newarray[3]& 0xff)) ;
-        byte a = (byte) 0b0010_1110;
-        //System.out.println((a % 2 == 0? "YES":"NO"));
-        //System.out.println((((a >> 1) & 0xf)));
     }
 }
