@@ -1,0 +1,19 @@
+
+g	java:S117‚"QRename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(ù£ù«
+G
+java:S1128"1Remove this unused import 'java.math.BigInteger'.(»Çâ€
+K
+java:S1128"0Remove this unused import 'java.nio.ByteBuffer'.(¿¢×±úÿÿÿÿ
+I
+java:S1128".Remove this unused import 'java.security.Key'.(ŞÃ“úÿÿÿÿ
+H
+java:S1128"-Remove this unused import 'java.util.Arrays'.(î–˜Éüÿÿÿÿ
+F
+java:S1128"+Remove this unused import 'java.util.List'.(Õë±Äøÿÿÿÿ
+Z
+java:S1128"DRemove this unused import 'java.util.concurrent.ExecutionException'.(¡£ØÍ
+S
+java:S1128	"8Remove this unused import 'java.util.concurrent.Future'.(á¬øíıÿÿÿÿ
+J
+java:S1128
+"4Remove this unused import 'java.util.stream.Stream'.(ó÷”

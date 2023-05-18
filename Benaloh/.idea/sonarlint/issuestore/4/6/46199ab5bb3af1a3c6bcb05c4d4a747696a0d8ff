@@ -1,0 +1,11 @@
+
+P
+java:S1118":Add a private constructor to hide the implicit public one.(Ó‡çÒ
+h	java:S100"NRename this method name to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(´ŒªŒþÿÿÿÿ
+m
+java:S3776"RRefactor this method to reduce its Cognitive Complexity from 19 to the 15 allowed.(´ŒªŒþÿÿÿÿ
+4
+java:S2119"Save and re-use this "Random".(–áÍÈ
+3
+java:S21195"Save and re-use this "Random".(¼ÝÅf
+V	java:S125<"<This block of commented-out lines of code should be removed.(Ãìý“úÿÿÿÿ
