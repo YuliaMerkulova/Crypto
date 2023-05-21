@@ -184,7 +184,7 @@ public class SerpentCipher {
         return decryptData;
     }
 
-    private byte[] encrypt(byte[] input) {//128 на вход
+    public byte[] encrypt(byte[] input) {//128 на вход
         input = permutationBits(input, IP);
         for (int i = 0; i < 32; i++){//rounds
             for (int j = 0; j < 16; j++){

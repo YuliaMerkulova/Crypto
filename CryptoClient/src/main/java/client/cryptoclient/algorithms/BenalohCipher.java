@@ -77,14 +77,9 @@ public class BenalohCipher {
         return -1;
     }
 
-    public static BigInteger[] encryptKey(int[] key, PublicKey pubicKey){
+    public static BigInteger[] encryptKey(byte[] byteArray, PublicKey pubicKey){
 
-        ByteBuffer buffer = ByteBuffer.allocate(key.length * 4);
-        for (int i = 0; i < key.length; i++){
-            buffer.putInt(key[i]);
-        }
-        byte[] byteArray = buffer.array();
-        BigInteger [] array = new BigInteger[key.length * 4];
+        BigInteger [] array = new BigInteger[byteArray.length];
         for (int i = 0; i < byteArray.length; i++){
             int m = byteArray[i] & 0xff;
             array[i] = encryptStatic(m, pubicKey);

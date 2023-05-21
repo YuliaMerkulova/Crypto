@@ -11,16 +11,43 @@
 </div>
 
 <button onclick="updateProgressBar()" class="btn btn-primary">Update Progress</button>
+<div style="visibility: hidden" th:text="${myId}" id="clientID"></div>
+
 
 <script>
-    function updateProgressBar() {
-        var progressBar = document.getElementById('progress-bar');
-        var currentProgress = parseInt(progressBar.style.width) || 0;
-        var newProgress = currentProgress + 10;
+    let id_ = document.getElementById('clientID').innerText;
+    function updateProgressBar(progress) {
+        let progressBar = document.getElementById('progress-bar');
+        // let currentProgress = parseInt(progressBar.style.width) || 0;
+        let newProgress = progress;
         progressBar.style.width = newProgress + '%';
         progressBar.setAttribute('aria-valuenow', newProgress);
         progressBar.innerText = newProgress + '%';
     }
+
+    let id = setInterval(requestProgress, 100);// каждые 100 мсек выполняем запрос
+
+    function requestProgress(){
+        fetch('http://localhost:8081/progress' + id_) // отправляет гет запрос
+            .then(function (response) { // обрабатываем респонс
+                if (response.ok) {
+                    return response.json(); // возвращаем объект в виде json
+                } else
+                {
+                    throw new Error('Ошибкаааааа (((');
+                }
+            })
+            .then(function (responseJson){ // ловим респонс в виде json
+                updateProgressBar(responseJson['progress']);
+                if (responseJson['success']) {
+                    clearTimeout(id); //больше не отправляем запросы
+                }
+        })
+        .catch(function (error) {
+            console.log(error)
+        })
+    }
+
 </script>
 </body>
 </html>

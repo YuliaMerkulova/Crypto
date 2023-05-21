@@ -86,15 +86,18 @@ public class CryptoController {
         }
 
         byte[] serpentKey = record.getKey_().getBytes(StandardCharsets.ISO_8859_1);
+        byte[] IV = record.getIV().getBytes(StandardCharsets.ISO_8859_1);
         log.info("Делаем буфер");
-        ByteBuffer buf = ByteBuffer.wrap(serpentKey);
-        int[] keySerpent = new int[serpentKey.length / 4];
-        for (int i = 0; i < keySerpent.length; i++){
-            keySerpent[i] = buf.getInt();
-        }
+//        ByteBuffer buf = ByteBuffer.wrap(serpentKey);
+//        int[] keySerpent = new int[serpentKey.length / 4];
+//        for (int i = 0; i < keySerpent.length; i++){
+//            keySerpent[i] = buf.getInt();
+//        }
         log.info("Зашифровываем ключ");
-        BigInteger[] encryptedKey = BenalohCipher.encryptKey(keySerpent, publicKey);
+        BigInteger[] encryptedKey = BenalohCipher.encryptKey(serpentKey, publicKey);
+        BigInteger[] encryptedIV = BenalohCipher.encryptKey(IV, publicKey);
         String jsonKey = objectMapper.writeValueAsString(encryptedKey);
+        String jsonIV = objectMapper.writeValueAsString(encryptedIV);
         log.info("Создаем заголовочки");
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -110,6 +113,8 @@ public class CryptoController {
         body.add("key", jsonKey);
         body.add("file", resource);
         body.add("clientId", clientId);
+        body.add("IV", jsonIV);
+        body.add("mode", record.getMode());
         log.info("Собираемся отправить");
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
         var response = restTemplate.postForEntity("http://localhost:8081/downloadFile", requestEntity, Object.class);
@@ -120,28 +125,38 @@ public class CryptoController {
     @PostMapping("/upload")
     public ResponseEntity<Object> uploadFile(@RequestParam("file") MultipartFile file,
                                              @RequestParam("id") Integer id,
-                                             @RequestParam("key") String key) throws IOException {
+                                             @RequestParam("key") String key,
+                                             @RequestParam("mode") String mode,
+                                             @RequestParam("IV") String IV) throws IOException {
         //System.out.println(key);
         BigInteger[] encKey = objectMapper.readValue(key, BigInteger[].class);
+        BigInteger[] encIV = objectMapper.readValue(IV, BigInteger[].class);
         //System.out.println(Arrays.toString(encKey));
         int[] decryptedKey = new int[0];
+        int[] decryptedIV = new int[0];
         if (clients.containsKey(id)){
             BenalohCipher benalohCipher = clients.get(id);
             clients.remove(id);
             decryptedKey = benalohCipher.decryptKey(encKey);
+            decryptedIV = benalohCipher.decryptKey(encIV);
             System.out.println(Arrays.toString(decryptedKey));
         }
-        ByteBuffer buffer = ByteBuffer.allocate(decryptedKey.length * 4);
-        for (int i = 0; i < decryptedKey.length; i++){
-            buffer.putInt(decryptedKey[i]);
-        }
-        byte[] byteArray = buffer.array();
-        String keyString = new String(byteArray, StandardCharsets.ISO_8859_1);
+
+        String keyString = new String(intArrayToByte(decryptedKey), StandardCharsets.ISO_8859_1);
+        String IVString = new String(intArrayToByte(decryptedIV), StandardCharsets.ISO_8859_1);
         byte[] fileRec = file.getBytes();
-        MyRecord record = new MyRecord(fileRec, keyString, file.getOriginalFilename());
+        MyRecord record = new MyRecord(fileRec, keyString, file.getOriginalFilename(), IVString, mode);
         recordRepository.save(record);
         log.info("save file");
         return new ResponseEntity<>(HttpStatusCode.valueOf(200));
+    }
+
+    public static byte[] intArrayToByte(int[] array){
+        ByteBuffer buffer = ByteBuffer.allocate(array.length * 4);
+        for (int i = 0; i < array.length; i++){
+            buffer.putInt(array[i]);
+        }
+        return buffer.array();
     }
 
 

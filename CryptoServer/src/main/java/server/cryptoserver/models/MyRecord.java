@@ -17,9 +17,13 @@ public class MyRecord {
     String key_;
 
     String fileName;
-    public MyRecord(byte[] myFile, String myKey, String fileName_){
+    String IV;
+    String Mode;
+    public MyRecord(byte[] myFile, String myKey, String fileName_, String IV, String Mode){
         file = myFile;
         key_ = myKey;
         fileName = fileName_;
+        this.IV = IV;
+        this.Mode = Mode;
     }
 }

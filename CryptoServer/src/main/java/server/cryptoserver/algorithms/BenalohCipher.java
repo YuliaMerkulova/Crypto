@@ -92,6 +92,15 @@ public class BenalohCipher {
         return a;
     }
 
+    public static BigInteger[] encryptKey(byte[] byteArray, PublicKey pubicKey){
+
+        BigInteger [] array = new BigInteger[byteArray.length];
+        for (int i = 0; i < byteArray.length; i++){
+            int m = byteArray[i] & 0xff;
+            array[i] = encryptStatic(m, pubicKey);
+        }
+        return array;
+    }
     public static BigInteger[] encryptKey(int[] key, PublicKey pubicKey){
 
         ByteBuffer buffer = ByteBuffer.allocate(key.length * 4);

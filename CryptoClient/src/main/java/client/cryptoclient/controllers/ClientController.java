@@ -1,9 +1,6 @@
 package client.cryptoclient.controllers;
 
-import client.cryptoclient.algorithms.BenalohCipher;
-import client.cryptoclient.algorithms.BenalohHelper;
-import client.cryptoclient.algorithms.PublicKey;
-import client.cryptoclient.algorithms.SerpentCipher;
+import client.cryptoclient.algorithms.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +22,7 @@ import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -37,8 +35,9 @@ import static client.cryptoclient.algorithms.BenalohCipher.encryptKey;
 public class ClientController {
     @Autowired
     ObjectMapper objectMapper;
-    private static Random randomizer = new Random(LocalDateTime.now().getNano());
-    private Map<Integer, BenalohCipher> myCiphers = new HashMap<Integer, BenalohCipher>();
+    private static final Random randomizer = new Random(LocalDateTime.now().getNano());
+    private final Map<Integer, BenalohCipher> myCiphers = new HashMap<Integer, BenalohCipher>();
+    private final Map<Integer, Crypto> clientsProgressBar = new HashMap<Integer, Crypto>();
     @AllArgsConstructor
     public static class RecordModel{
         public String fileName;
@@ -60,7 +59,6 @@ public class ClientController {
     @GetMapping("/download{id}")
     public String wantDownloadFile(Model model, @PathVariable("id") Integer id) throws JsonProcessingException {
         model.addAttribute("title", "Download: " + id);
-
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
 
@@ -70,7 +68,11 @@ public class ClientController {
         do {
             myId = randomizer.nextInt();
         } while(myCiphers.containsKey(myId));
+
+        model.addAttribute("myId", myId);
+
         myCiphers.put(myId, benalohCipher);
+
 
         PublicKey publicKey = benalohCipher.getPublicKey();
 
@@ -94,18 +96,31 @@ public class ClientController {
     }
 
     @PostMapping("/downloadFile")
-    public ResponseEntity<Object> downloadingFile(@RequestParam("file") MultipartFile file, @RequestParam("key") String key, @RequestParam("clientId") Integer clientId) throws IOException, ExecutionException, InterruptedException {
+    public ResponseEntity<Object> downloadingFile(@RequestParam("file") MultipartFile file,
+                                                  @RequestParam("key") String key,
+                                                  @RequestParam("clientId") Integer clientId,
+                                                  @RequestParam("IV") String IV,
+                                                  @RequestParam("mode") String mode) throws IOException, ExecutionException, InterruptedException {
         BigInteger[] encKey = objectMapper.readValue(key, BigInteger[].class);
+        BigInteger[] encIV = objectMapper.readValue(IV, BigInteger[].class);
         int[] decryptedKey = new int[0];
+        int[] decryptedIV = new int[0];
+
         if (myCiphers.containsKey(clientId)){
             BenalohCipher benalohCipher = myCiphers.get(clientId);
-            myCiphers.remove(clientId);
+            //myCiphers.remove(clientId);
             decryptedKey = benalohCipher.decryptKey(encKey);
-            //System.out.println(Arrays.toString(decryptedKey));
+            decryptedIV = benalohCipher.decryptKey(encIV);
         }
-        byte[] bytesFile =  file.getBytes();
+        byte[] bytesFile;
+        byte[] arrayIV = intArrayToByte(decryptedIV);
         SerpentCipher serpentCipher = new SerpentCipher(decryptedKey);
-        bytesFile = serpentCipher.decryptData(bytesFile);
+        Crypto cryptoProcess = new Crypto(Modes.valueOf(mode), serpentCipher, arrayIV);
+
+        clientsProgressBar.put(clientId, cryptoProcess);
+
+        bytesFile = cryptoProcess.decryptFile(file.getInputStream());
+        //bytesFile = serpentCipher.decryptData(bytesFile);
         try{
             File myFile = new File("D:/" + file.getOriginalFilename());
             FileOutputStream fos = new FileOutputStream(myFile);
@@ -120,29 +135,37 @@ public class ClientController {
 
 
 
-    @GetMapping("/upload")
-    public String upload(Model model){
-        model.addAttribute("title", "Upload");
-        return "UploadFile";
+    @GetMapping("/progress{id}")
+    public ResponseEntity<Object> progress(@PathVariable("id") Integer id){
+        Map<String, Object> body = new HashMap<>();
+        Float progress = 0F;
+        body.put("progress", progress);
+        body.put("success", false);
+
+        return new ResponseEntity<>(body, HttpStatusCode.valueOf(200));
     }
 
     @PostMapping("/upload")
-    public @ResponseBody String handleFileUpload(@RequestParam("file") MultipartFile file){
+    public @ResponseBody String handleFileUpload(@RequestParam("file") MultipartFile file,
+                                                 @RequestParam("mode") String mode){
         if (!file.isEmpty()) {
             try {
-                byte[] bytes = file.getBytes();
                 int[] key = generateKey(8);
-                System.out.println("Key generated");
+
+                //System.out.println("Key generated");
                 SerpentCipher serpentCipher = new SerpentCipher(key);
-                System.out.println(Arrays.toString(key));
-                bytes = serpentCipher.encryptFile(bytes);
-                System.out.println("file encrypted");
+                file.getSize();
+                //System.out.println(Arrays.toString(key));
+                //bytes = serpentCipher.encryptFile(bytes);
+                Crypto cryptoProcess = new Crypto(Modes.valueOf(mode), serpentCipher);
+                //System.out.println("file encrypted");
+                byte[] bytes = cryptoProcess.encryptFile(file.getInputStream());
                 URL url = new URL("http://localhost:8080/crypto/getKey");
                 URLConnection connection = url.openConnection();
                 HttpURLConnection httpURLConnection = (HttpURLConnection) connection;
                 httpURLConnection.setRequestMethod("GET");
                 int responseCode = httpURLConnection.getResponseCode();
-                System.out.println("response "+  responseCode);
+                //System.out.println("response "+  responseCode);
                 if (responseCode == 200){
                     BufferedReader in = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
                     String inputLine;
@@ -169,11 +192,13 @@ public class ClientController {
                     MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
                     body.add("file", resource);
                     System.out.println(publicKey.n);
-                    BigInteger[] encKey = encryptKey(key, publicKey);
+                    BigInteger[] encKey = encryptKey(intArrayToByte(key), publicKey);
                     String jsonKey = objectMapper.writeValueAsString(encKey);
                     //System.out.println(jsonKey);
                     body.add("key", jsonKey);
                     body.add("id", id);
+                    body.add("mode", mode);
+                    body.add("IV", objectMapper.writeValueAsString(encryptKey(cryptoProcess.getIV(), publicKey)));
                     HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
                     ResponseEntity<String> response = restTemplate.exchange("http://localhost:8080/crypto/upload",
@@ -196,6 +221,14 @@ public class ClientController {
             key[i] = randomizer.nextInt();
         }
         return key;
+    }
+
+    public static byte[] intArrayToByte(int[] array){
+        ByteBuffer buffer = ByteBuffer.allocate(array.length * 4);
+        for (int i = 0; i < array.length; i++){
+            buffer.putInt(array[i]);
+        }
+        return buffer.array();
     }
 
 }

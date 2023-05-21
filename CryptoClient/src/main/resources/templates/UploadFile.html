@@ -10,6 +10,17 @@
       <div class="col-10">
         <form method="POST" enctype="multipart/form-data" action="/upload">
           <input name="file" type="file" class="form-control">
+          <label for="modeSelect" class="form-label">
+            <select name="mode" id="modeSelect">
+              <option value="ECB">ECB</option>
+              <option value="CBC">CBC</option>
+              <option value="CFB">CFB</option>
+              <option value="OFB">OFB</option>
+              <option value="CTR">CTR</option>
+              <option value="RD">RD</option>
+              <option value="RDH">RDH</option>
+            </select>
+          </label>
           <button type="submit" class="btn btn-primary">Загрузить</button>
         </form>
       </div>
