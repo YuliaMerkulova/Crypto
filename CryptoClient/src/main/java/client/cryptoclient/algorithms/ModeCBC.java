@@ -12,7 +12,7 @@ public class ModeCBC implements CypherMode {
         System.out.println("Стар шифроания");
         byte[] prevBlock = IV;
         for (int i = 0; i < data.length; i+=16) {
-            System.out.println("В цикле " + i);
+            //System.out.println("В цикле " + i);
             byte[] block = xor(data, prevBlock, i);
             prevBlock = serpentCipher.encrypt(block);
             System.arraycopy(prevBlock, 0, data, i, 16);

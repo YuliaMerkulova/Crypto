@@ -20,8 +20,8 @@ public class BenalohCipher {
     }
 
     private void generateKey(int keySize) {
-        while ((publicKey.r = generatePrime(10)).compareTo(BigInteger.valueOf(256)) <= 0) ;
-
+        //while ((publicKey.r = generatePrime(10)).compareTo(BigInteger.valueOf(256)) <= 0) ;
+        publicKey.r = BigInteger.valueOf(293);
         BigInteger pMinusOne;
         System.out.println(
                 publicKey.r

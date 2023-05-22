@@ -9,9 +9,7 @@
 <div class="progress">
     <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
 </div>
-<div class="display-3" id="textRedirect" style="display: none">Файл успешно расшифрован!</div>
-
-
+<div class="display-3" id="textRedirect" style="display: none">Файл загружен! Перенаправляем на главную....</div>
 <div style="visibility: hidden" th:text="${myId}" id="clientID"></div>
 
 
@@ -31,7 +29,7 @@
     let id = setInterval(requestProgress, 100);// каждые 100 мсек выполняем запрос
 
     function requestProgress(){
-        fetch('http://localhost:8081/progress' + id_) // отправляет гет запрос
+        fetch('http://localhost:8081/progressUpload' + id_) // отправляет гет запрос
             .then(function (response) { // обрабатываем респонс
                 if (response.ok) {
                     return response.json(); // возвращаем объект в виде json
@@ -49,16 +47,16 @@
                     updateProgressBar(responseJson['progress']);
 
                 } else {
+                    console.log(responseJson['state'])
                     clearTimeout(id);
                     updateProgressBar(100);
-                    window.location.href = "http://localhost:8081" + "/downloadFileClient" + id_;
                     document.getElementById("textRedirect").style.display = "block";
-
+                    setTimeout(()=>window.location.replace( "http://localhost:8081/"), 1000);
                 }
-        })
-        .catch(function (error) {
-            console.log(error)
-        })
+            })
+            .catch(function (error) {
+                console.log(error)
+            })
     }
 
 </script>

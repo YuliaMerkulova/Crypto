@@ -17,7 +17,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import server.cryptoserver.algorithms.BenalohCipher;
 import server.cryptoserver.algorithms.PublicKey;
-import server.cryptoserver.algorithms.SerpentCipher;
 import server.cryptoserver.models.MyRecord;
 import server.cryptoserver.repository.RecordRepository;
 
@@ -27,13 +26,14 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.StreamSupport;
 
 @Slf4j
 @Controller // эта штука будет ловить запросы
 @RequestMapping(path = "/crypto") //путь по которому стучимся
 public class CryptoController {
-    private HashMap<Integer, BenalohCipher> clients = new HashMap<>();
+    private ConcurrentHashMap<Integer, BenalohCipher> clients = new ConcurrentHashMap<>();
     ObjectMapper objectMapper = new ObjectMapper();
     private Random randomizer = new Random(LocalDateTime.now().getNano());
     public static class RecordModel{
@@ -81,8 +81,10 @@ public class CryptoController {
         PublicKey publicKey = objectMapper.readValue(key, PublicKey.class);
         MyRecord record = recordRepository.findById(id).orElse(null);
         log.info("Ищем файлик");
+        String responses = "lalala";
         if (Optional.ofNullable(record).isEmpty()){
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            log.error("FILE NOT FOUND");
+            return ResponseEntity.status(300).build();
         }
 
         byte[] serpentKey = record.getKey_().getBytes(StandardCharsets.ISO_8859_1);
