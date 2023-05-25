@@ -8,31 +8,38 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </head>
 <body>
-    <div class="container-fluid justify-content-center">
-        <div class="row justify-content-around">
+    <div class="row container-fluid justify-content-center">
+        <div class="row col-12 justify-content-around my-4">
             <div class="col-4 justify-content-center">
                 <a href="/upload" class="btn btn-primary">Загрузить</a>
             </div>
 
             <div class="col-4">
                 <h1 class="h1">
-                    Hello World!
+                    Welcome
                 </h1>
             </div>
-
             <div class="col-4">
-                <button class="btn btn-primary">Тык</button>
             </div>
         </div>
-
-        <div class="row mt-5 col-11">
-            <table class="table table-striped">
+        <div class="col-12">
+        <div class="row mt-5 col-12">
+            <table class="table col-12 table-striped table-info">
                 <thead>
                 <tr>
                     <th>
                         Name
                     </th>
-                    <th className="text-end">
+                    <th>
+                        Mode
+                    </th>
+                    <th>
+                        Size
+                    </th>
+                    <th>
+                        Progress
+                    </th>
+                    <th class="text-end">
                         Options
                     </th>
                 </tr>
@@ -40,29 +47,38 @@
                 <tbody>
 
                 <tr th:each="fileData : ${files}" th:key="${fileData.id}">
-                    <td th:text="${fileData.fileName} + ' ' + ${fileData.id}">
+                    <td th:text="${fileData.fileName}">
                     </td>
-
+                    <td th:text="${fileData.Mode}">
+                    </td>
+                    <td th:text="${fileData.size} + КБ">
+                    </td>
                     <td>
-                        <button type="button" className="btn btn-light mx-1 float-end" data-toggle="modal" data-target="#myModal">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                 fill="currentColor" className="bi bi-trash3" viewBox="0 0 16 16">
-                                <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5ZM11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 0H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1h-.995a.59.59 0 0 0-.01 0H11Zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5h9.916Zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47ZM8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5Z"/>
-                            </svg>
-                        </button>
-                        <a type="button" className="btn btn-light mx-1 float-end" th:href="'/download'+${fileData.id}">
+                    <div class="progress">
+                        <div th:id="'progress-bar-download-'+${fileData.id}" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-light mx-1 float-end" th:onclick="'downloadFile('+${fileData.id}+')'">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down" viewBox="0 0 16 16">
                                 <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
                                 <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
                             </svg>
-                        </a>
+                        </button>
                     </td>
 
                 </tr>
                 </tbody>
             </table>
-
+        </div>
         </div>
     </div>
+
+    <script>
+        function downloadFile(id) {
+            let url = '/download' + id;
+
+        }
+    </script>
 </body>
 </html>

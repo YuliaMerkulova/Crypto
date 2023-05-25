@@ -14,8 +14,8 @@ public class CryptoClientApplication {
     @Bean
     MultipartConfigElement multipartConfigElement() {
         MultipartConfigFactory factory = new MultipartConfigFactory();
-        factory.setMaxFileSize(DataSize.ofGigabytes(3));
-        factory.setMaxRequestSize(DataSize.ofGigabytes(3));
+        factory.setMaxFileSize(DataSize.ofMegabytes(50));
+        factory.setMaxRequestSize(DataSize.ofMegabytes(50));
         return factory.createMultipartConfig();
     }
 

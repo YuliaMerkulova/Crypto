@@ -102,6 +102,7 @@ public class SerpentCipher {
     public byte[] decrypt(byte[] input) {
         input = permutationBits(input, IP);
         for (int i = 31; i >= 0; i--) {
+
             if (i == 31){
                 for (int j = 0; j < 16; j++){
                     input[j] = (byte) (K[i + 1][j] ^ input[j]);
@@ -125,77 +126,22 @@ public class SerpentCipher {
         return input;
     }
 
-    public byte[] encryptFile(byte[] input){
-        int len =  input.length;
-        ExecutorService service = Executors.newFixedThreadPool(4);
-        List<Future<byte[]>> futureBlocks = new ArrayList<Future<byte[]>>();
-        for(int i = 0; i < input.length - 16; i+=16)
-        {
-            byte[] block = Arrays.copyOfRange(input, i, i + 16);
-            futureBlocks.add(service.submit(() -> encrypt(block)));
-            //byte[] encrypted = encrypt(block);
-            //System.arraycopy(encrypted, 0, input, i, i + 16);
-        }
-        //System.out.println("Finish");
-        byte lastByte =  (byte) (16 - (len % 16));
-        byte[] block = new byte[16];
-        System.arraycopy(input, len - len % 16, block, 0, len % 16);
-        //System.out.println("Start2");
-        for (int i = len % 16; i < 16; i++){
-            block[i] = lastByte;
-        }
-        futureBlocks.add(service.submit(() -> encrypt(block)));
-
-        byte[] encrypted = new byte[len + (16 - len % 16)];
-        //System.out.println("Start3");
-        for(int i = 0; i < encrypted.length / 16; i += 1) {
-            try {
-                byte[] encBlock = futureBlocks.get(i).get();
-                System.arraycopy(encBlock, 0, encrypted, i * 16, 16);
-            } catch (InterruptedException | ExecutionException e){
-                log.error("Something wrong  in cipher");
-            }
-        }
-        System.out.println("End4");
-        return encrypted;
-    }
-
-    public byte[] decryptData(byte[] input) throws ExecutionException, InterruptedException {
-        int len =  input.length;
-        ExecutorService service = Executors.newFixedThreadPool(4);
-        List<Future<byte[]>> futureBlocks = new ArrayList<Future<byte[]>>();
-        for(int i = 0; i < input.length - 16; i+=16)
-        {
-            byte[] block = Arrays.copyOfRange(input, i, i + 16);
-            futureBlocks.add(service.submit(() -> decrypt(block)));
-            //byte[] encrypted = encrypt(block);
-            //System.arraycopy(encrypted, 0, input, i, i + 16);
-        }
-        byte[] lastBlock = new byte[16];
-        System.arraycopy(input, len - 16, lastBlock, 0, 16);
-        lastBlock = decrypt(lastBlock);
-        int num = lastBlock[lastBlock.length - 1] & 0xff;
-        byte[] decryptData = new byte[len - num];
-        System.arraycopy(lastBlock, 0, decryptData, decryptData.length - 16 + num, lastBlock.length - num);
-        for(int i = 0; i < len / 16 - 1; i++){
-            byte[] block = futureBlocks.get(i).get();
-            System.arraycopy(block, 0, decryptData, i * 16, 16);
-        }
-        return decryptData;
-    }
-
     public byte[] encrypt(byte[] input) {//128 на вход
         input = permutationBits(input, IP);
-        for (int i = 0; i < 32; i++){//rounds
+
+        for (int i = 0; i < 32; i++){
+            //rounds
             for (int j = 0; j < 16; j++){
                 input[j] = (byte) (K[i][j] ^ input[j]);
             }
+
             //TODO parallelize
             for (int j = 0; j < 16; j++){
                 byte tempL = (byte) (input[j] & 0x0f);
                 byte tempR = (byte) ((input[j] & 0xf0) >> 4);
                 input[j] = (byte) ((replaceWithSBox(tempL, i % 8) << 4) | replaceWithSBox(tempR, i % 8) & 0xff);
             }
+
             if (i != 31){
                 linearTransform(input);
             } else {

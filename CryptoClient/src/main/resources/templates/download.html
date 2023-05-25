@@ -9,15 +9,41 @@
 <div class="progress">
     <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
 </div>
-<div class="display-3" id="textRedirect" style="display: none">Файл успешно расшифрован!</div>
-
+<div class="display-3" id="text"></div>
 
 <div style="visibility: hidden" th:text="${myId}" id="clientID"></div>
-
+<div style="visibility: hidden" th:text="${fileId}" id="fileID"></div>
 
 <script>
-    let id_ = document.getElementById('clientID').textContent;
+    let id_client = document.getElementById('clientID').textContent;
+    let id_file = document.getElementById('fileID').textContent;
 
+    function sendHttpRequest(url, method, formData) { // отправляет http запрос по url
+        let requestOptions = {
+            method: method,
+            body: formData
+        };
+        return fetch(url, requestOptions)
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Ошибка: ' + response.status);
+                }
+                return response.json();
+            });
+    }
+    let id;
+
+    let getNewUserUpload = 'http://localhost:8081/downloading/' + id_file + '/' + id_client;
+    let method = 'GET';
+
+    sendHttpRequest(getNewUserUpload, method, null)
+        .then(function(response) {
+        })
+        .catch(function(error) {
+            console.error('Ошибка при отправке запроса:', error);
+        });
+
+    id = setInterval(requestProgress, 300);// каждые 300 мсек выполняем запрос
 
     function updateProgressBar(progress) {
         let progressBar = document.getElementById('progress-bar');
@@ -28,10 +54,9 @@
         progressBar.innerText = newProgress + '%';
     }
 
-    let id = setInterval(requestProgress, 100);// каждые 100 мсек выполняем запрос
 
     function requestProgress(){
-        fetch('http://localhost:8081/progress' + id_) // отправляет гет запрос
+        fetch('http://localhost:8081/progress' + id_client) // отправляет гет запрос
             .then(function (response) { // обрабатываем респонс
                 if (response.ok) {
                     return response.json(); // возвращаем объект в виде json
@@ -41,26 +66,32 @@
                 }
             })
             .then(function (responseJson){ // ловим респонс в виде json
-                if (responseJson['state'] == "NOT_FOUND") {
+                if (responseJson['state'] === "NOT_FOUND") {
                     clearTimeout(id);
                     updateProgressBar(0);
                     window.location.href = "http://localhost:8081" + responseJson["url"];
-                } else if (responseJson['state'] == "WORKING"){
+                } else if (responseJson['state'] === "WORKING"){
+                    document.getElementById("text").textContent = "Расшифровываем....."
+
                     updateProgressBar(responseJson['progress']);
 
-                } else {
+                } else if (responseJson['state'] === "FINISHED") {
+                    console.log(responseJson['state'])
                     clearTimeout(id);
                     updateProgressBar(100);
-                    window.location.href = "http://localhost:8081" + "/downloadFileClient" + id_;
-                    document.getElementById("textRedirect").style.display = "block";
-
+                    document.getElementById("text").textContent = "Файл готов к скачиванию!"
+                    setTimeout(()=>window.location.replace( "http://localhost:8081/downloadFileClient" + id_client), 1000);
                 }
-        })
-        .catch(function (error) {
-            console.log(error)
-        })
+                else if (responseJson['state'] === "WAITING"){
+                    document.getElementById("text").textContent = "Ждем файл с сервера....."
+                }
+            })
+            .catch(function (error) {
+                console.log(error)
+            })
     }
 
 </script>
+
 </body>
 </html>

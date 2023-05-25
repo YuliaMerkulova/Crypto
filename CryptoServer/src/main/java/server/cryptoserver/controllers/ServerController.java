@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import server.cryptoserver.algorithms.BenalohCipher;
 import server.cryptoserver.algorithms.PublicKey;
 import server.cryptoserver.models.MyRecord;
+import server.cryptoserver.models.Selector;
 import server.cryptoserver.repository.RecordRepository;
 
 import java.io.IOException;
@@ -27,12 +28,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.StreamSupport;
 
 @Slf4j
 @Controller // эта штука будет ловить запросы
 @RequestMapping(path = "/crypto") //путь по которому стучимся
-public class CryptoController {
+public class ServerController {
     private ConcurrentHashMap<Integer, BenalohCipher> clients = new ConcurrentHashMap<>();
     ObjectMapper objectMapper = new ObjectMapper();
     private Random randomizer = new Random(LocalDateTime.now().getNano());
@@ -69,8 +69,9 @@ public class CryptoController {
 
     @GetMapping("/getfiles")
     public ResponseEntity<Object> getFiles(){
-        var files = StreamSupport.stream(recordRepository.findAll().spliterator(), false).map(RecordModel::new).toArray();
-        return new ResponseEntity<>(files, HttpStatusCode.valueOf(200));
+
+        List<Selector> info = recordRepository.findAllFiles();
+        return new ResponseEntity<>(info, HttpStatusCode.valueOf(200));
     }
 
     @PostMapping("/getFile")
@@ -81,7 +82,6 @@ public class CryptoController {
         PublicKey publicKey = objectMapper.readValue(key, PublicKey.class);
         MyRecord record = recordRepository.findById(id).orElse(null);
         log.info("Ищем файлик");
-        String responses = "lalala";
         if (Optional.ofNullable(record).isEmpty()){
             log.error("FILE NOT FOUND");
             return ResponseEntity.status(300).build();
@@ -89,12 +89,6 @@ public class CryptoController {
 
         byte[] serpentKey = record.getKey_().getBytes(StandardCharsets.ISO_8859_1);
         byte[] IV = record.getIV().getBytes(StandardCharsets.ISO_8859_1);
-        log.info("Делаем буфер");
-//        ByteBuffer buf = ByteBuffer.wrap(serpentKey);
-//        int[] keySerpent = new int[serpentKey.length / 4];
-//        for (int i = 0; i < keySerpent.length; i++){
-//            keySerpent[i] = buf.getInt();
-//        }
         log.info("Зашифровываем ключ");
         BigInteger[] encryptedKey = BenalohCipher.encryptKey(serpentKey, publicKey);
         BigInteger[] encryptedIV = BenalohCipher.encryptKey(IV, publicKey);
@@ -130,10 +124,8 @@ public class CryptoController {
                                              @RequestParam("key") String key,
                                              @RequestParam("mode") String mode,
                                              @RequestParam("IV") String IV) throws IOException {
-        //System.out.println(key);
         BigInteger[] encKey = objectMapper.readValue(key, BigInteger[].class);
         BigInteger[] encIV = objectMapper.readValue(IV, BigInteger[].class);
-        //System.out.println(Arrays.toString(encKey));
         int[] decryptedKey = new int[0];
         int[] decryptedIV = new int[0];
         if (clients.containsKey(id)){
@@ -148,7 +140,13 @@ public class CryptoController {
         String IVString = new String(intArrayToByte(decryptedIV), StandardCharsets.ISO_8859_1);
         byte[] fileRec = file.getBytes();
         MyRecord record = new MyRecord(fileRec, keyString, file.getOriginalFilename(), IVString, mode);
-        recordRepository.save(record);
+        log.error("SIZe" +  fileRec.length);
+        try {
+            recordRepository.save(record);
+        } catch (Exception e)
+        {
+            return new ResponseEntity<>(HttpStatusCode.valueOf(300));
+        }
         log.info("save file");
         return new ResponseEntity<>(HttpStatusCode.valueOf(200));
     }
@@ -164,7 +162,7 @@ public class CryptoController {
 
     private RecordRepository recordRepository;
 
-    public CryptoController(@Autowired RecordRepository recordRepository){
+    public ServerController(@Autowired RecordRepository recordRepository){
         this.recordRepository = recordRepository;
     }
 }

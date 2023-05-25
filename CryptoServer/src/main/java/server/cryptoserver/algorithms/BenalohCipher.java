@@ -25,14 +25,14 @@ public class BenalohCipher {
         BigInteger pMinusOne;
         //System.out.println(publicKey.r);
         do { // генерация p такого, что p-1 делится на r и p-1/r взаимно просто с r
-            privateKey.p = generatePrime(keySize);
+            privateKey.p = generatePrime(keySize, new MillerRabinTest());
             pMinusOne = privateKey.p.subtract(BigInteger.ONE);
         } while(pMinusOne.mod(publicKey.r).intValue() != 0
                 || pMinusOne.divide(publicKey.r).gcd(publicKey.r).intValue() != 1);
         BigInteger qMinusOne;
 
         do {//генерация q такого, что q-1 и r взаимно просты
-            privateKey.q = generatePrime(keySize - 1);
+            privateKey.q = generatePrime(keySize - 1, new MillerRabinTest());
             qMinusOne = privateKey.q.subtract(BigInteger.ONE);
         } while (privateKey.p.compareTo(privateKey.q) == 0 || qMinusOne.gcd(publicKey.r).intValue()!=1);
 
@@ -45,7 +45,7 @@ public class BenalohCipher {
 
     private void itemZStarN(BigInteger n, BigInteger phi, BigInteger r) {
         do {
-            publicKey.y = generatePrime(n.bitLength());
+            publicKey.y = generatePrime(n.bitLength(), new MillerRabinTest());
         } while (publicKey.y.compareTo(n) >= 0 || publicKey.y.gcd(n).intValue()
                 != 1 || publicKey.y.modPow(phi.divide(r),n).intValue() == 1);
     }

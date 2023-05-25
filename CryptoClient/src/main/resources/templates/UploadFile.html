@@ -10,9 +10,9 @@
   <div class="container-fluid justify-content-center">
     <div class="row justify-content-center">
       <div class="col-10">
-        <form method="POST" enctype="multipart/form-data" action="/upload">
+        <form method="POST" enctype="multipart/form-data" action="/upload" id="myForm">
           <label for="formFile" class="form-label"></label>
-          <input name="file" type="file" class="form-control" id="formFile">
+          <input name="file" type="file" class="form-control" id="formFile" required>
           <label for="modeSelect" class="form-label">
             <select name="mode" id="modeSelect">
               <option value="ECB">ECB</option>
@@ -24,7 +24,7 @@
               <option value="RDH">RDH</option>
             </select>
           </label>
-          <button type="submit" class="btn btn-primary">Загрузить</button>
+          <button type="submit" class="btn btn-primary" id="uploadBtn">Загрузить</button>
         </form>
       </div>
     </div>
@@ -32,14 +32,73 @@
   <div class="progress">
     <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
   </div>
-  <div class="display-3" id="textRedirect" style="display: none">Файл загружен! Перенаправляем на главную....</div>
-  <div style="visibility: hidden" th:text="${myId}" id="clientID"></div>
+  <div class="display-3" id="text"></div>
+  <div class="display-3" id="textRedirect"></div>
+  <div style="visibility: hidden" id="clientID"></div>
   <script>
     let id_ = document.getElementById('clientID').textContent;
+    let clientIdElement = document.getElementById('clientID')
+
+    function sendHttpRequest(url, method, formData) { // отправляет http запрос по url
+      let requestOptions = {
+        method: method,
+        body: formData
+      };
+      return fetch(url, requestOptions)
+              .then(function(response) {
+                if (!response.ok) {
+                  throw new Error('Ошибка: ' + response.status);
+                }
+                return response.json();
+              });
+    }
+    let id;
+    let form = document.getElementById("myForm");
+    form .addEventListener('submit', function(event) {
+      let myBtn = document.getElementById("uploadBtn");
+      myBtn.disabled = true;
+
+      event.preventDefault(); // предотвращаем стандартное поведение отправки формы
+
+      let getNewUserUpload = 'http://localhost:8081/newUploadUser'
+      let method = 'GET';
+
+      let clientId = '';
+      sendHttpRequest(getNewUserUpload, method, null)
+              .then(function(response) {
+                clientId = response['clientId'];
+                clientIdElement.textContent = clientId;
+                id = setInterval(requestProgress, 300);// каждые 300 мсек выполняем запрос
+                let url = 'http://localhost:8081/upload';
+                method = 'POST';
+                let formData = new FormData();
+
+                let fileInput = document.getElementById("formFile")
+                let modeElement = document.getElementById("modeSelect")
+
+                formData.append('file', fileInput.files[0]);
+                formData.append('mode', modeElement.value);
+                formData.append('clientId', clientId)
+
+                sendHttpRequest(url, method, formData)
+                        .then(function(response) {
+                          console.log('Успешный ответ сервера:', response);
+                          myBtn.disabled = false
+                        })
+                        .catch(function(error) {
+                          console.error('Ошибка при отправке запроса:', error);
+                          myBtn.disabled = false
+                        });
+              })
+              .catch(function(error) {
+                console.error('Ошибка при отправке запроса:', error);
+                myBtn.disabled = false
+              });
+    })
 
 
-    function updateProgressBar(progress) {
-      let progressBar = document.getElementById('progress-bar');
+    function updateProgressBar(progress, element) {
+      let progressBar = document.getElementById(element);
       // let currentProgress = parseInt(progressBar.style.width) || 0;
       let newProgress = progress;
       progressBar.style.width = newProgress + '%';
@@ -47,10 +106,9 @@
       progressBar.innerText = newProgress + '%';
     }
 
-    let id = setInterval(requestProgress, 100);// каждые 100 мсек выполняем запрос
 
     function requestProgress(){
-      fetch('http://localhost:8081/progressUpload' + id_) // отправляет гет запрос
+      fetch('http://localhost:8081/progressUpload' + clientIdElement.textContent) // отправляет гет запрос
               .then(function (response) { // обрабатываем респонс
                 if (response.ok) {
                   return response.json(); // возвращаем объект в виде json
@@ -60,18 +118,19 @@
                 }
               })
               .then(function (responseJson){ // ловим респонс в виде json
-                if (responseJson['state'] == "NOT_FOUND") {
+                if (responseJson['state'] === "NOT_FOUND") {
                   clearTimeout(id);
                   updateProgressBar(0);
                   window.location.href = "http://localhost:8081" + responseJson["url"];
-                } else if (responseJson['state'] == "WORKING"){
+                } else if (responseJson['state'] === "WORKING"){
+                  document.getElementById("textRedirect").textContent = "Зашифровываем...";
                   updateProgressBar(responseJson['progress']);
 
-                } else {
+                } else if (responseJson['state'] === "FINISHED"){
                   console.log(responseJson['state'])
                   clearTimeout(id);
                   updateProgressBar(100);
-                  document.getElementById("textRedirect").style.display = "block";
+                  document.getElementById("textRedirect").textContent = "Файл загружен! Перенаправляем на главную....";
                   setTimeout(()=>window.location.replace( "http://localhost:8081/"), 1000);
                 }
               })

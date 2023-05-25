@@ -54,25 +54,24 @@ public class Crypto {
         byte[] buffer = new byte[1048576];
         int len;
         encryptProgress = 0F;
-        //isProgressBarEnd = false;
-        System.out.println("SSIZE FILE " + sizeFile);
+        //System.out.println("SSIZE FILE " + sizeFile);
         double maxProgress = Math.ceil((double)sizeFile / (1048576)); // mb in file
-        System.out.println("MAX PROGRESS" + maxProgress);
+        //System.out.println("MAX PROGRESS" + maxProgress);
         try {
             int maxLen = (this.mode == Modes.RD) ? 1048544 : (this.mode == Modes.RDH) ? 1048528 : 1048560;
             while ((len = inputStream.read(buffer, 0, maxLen)) > 0) {
                 cypherMode.reset();
                 int last = len % 16;
                 Arrays.fill(buffer, len, len + 16 - last, (byte) (16 - last));
-                System.out.println("in encrypt padded = " + (buffer[len + 1] & 0xff));
+                //System.out.println("in encrypt padded = " + (buffer[len + 1] & 0xff));
                 byte[] encryptedBlock = cypherMode.encrypt(buffer, len + 16 - last);
                 byte[] tmp = new byte[data.length + len + 16 - last + ((this.mode == Modes.RD) ? 16 : (this.mode == Modes.RDH) ? 32 : 0)];
                 System.arraycopy(data, 0, tmp, 0, data.length);
                 System.arraycopy(encryptedBlock, 0, tmp, data.length, len + 16 - last + ((this.mode == Modes.RD) ? 16 : (this.mode == Modes.RDH) ? 32 : 0));
                 data = tmp;
-                System.out.println("encryptProgress" + encryptProgress);
+                //System.out.println("encryptProgress" + encryptProgress);
                 encryptProgress += (1f/maxProgress) * 100;
-                System.out.println("encryptProgress" + encryptProgress);
+                //System.out.println("encryptProgress" + encryptProgress);
             }
             //isProgressBarEnd = true;
 
@@ -94,11 +93,10 @@ public class Crypto {
         try {
             while ((len = inputStream.read(buffer, 0, 1048576)) > 0) {
                 cypherMode.reset();
-
-                System.out.println((buffer[0] & 0xFF) + " " + len);
+                //System.out.println((buffer[0] & 0xFF) + " " + len);
                 byte[] decrypted = cypherMode.decrypt(buffer, len);
                 int paddedBytes = decrypted[len - 1 - ((this.mode == Modes.RD) ? 16 : (this.mode == Modes.RDH) ? 32 : 0)] & 0xFF;
-                System.out.println("in decrypt paddedBytes = " + paddedBytes);
+                //System.out.println("in decrypt paddedBytes = " + paddedBytes);
                 byte[] tmp = new byte[data.length + len - paddedBytes - ((this.mode == Modes.RD) ? 16 : (this.mode == Modes.RDH) ? 32 : 0)];
                 System.arraycopy(data, 0, tmp, 0, data.length);
                 System.arraycopy(decrypted, 0, tmp, data.length, len - paddedBytes -
