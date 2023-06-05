@@ -51,13 +51,6 @@ public class ClientUpploadController {
     private final ConcurrentMap<Integer, Crypto> clientsProgressBarUpload = new ConcurrentHashMap<>();
     private final ConcurrentMap<Integer, States> clientsStateUpload = new ConcurrentHashMap<>();
 
-
-    @GetMapping("/upload") //загружает страницу с формой обработка кнопки на главной странице
-    public String upload(Model model){
-        model.addAttribute("title", "kokoko");
-        return "UploadFile";
-    }
-
     @GetMapping("/newUploadUser")
     public ResponseEntity<Object> generateUserId(){
         Map<String, Integer> id = new HashMap<>();
@@ -66,6 +59,20 @@ public class ClientUpploadController {
            myId = randomizer.nextInt();
         } while(clientsProgressBarUpload.containsKey(myId) || clientsStateUpload.containsKey(myId));
         id.put("clientId", myId);
+        clientsStateUpload.put(myId, States.WAITING);
+        ExecutorService service = Executors.newFixedThreadPool(1);
+        Integer finalId = myId;
+        service.submit(() -> {
+            try {
+                Thread.sleep(3600000);
+                clientsStateUpload.remove(finalId);
+                clientsProgressBarUpload.remove(finalId);
+            }
+            catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+        service.shutdown();
         return new ResponseEntity<>(id, HttpStatusCode.valueOf(200));
     }
 
@@ -145,7 +152,7 @@ public class ClientUpploadController {
                 }
             }
         }
-        else{
+        else {
             clientsStateUpload.put(clientID, States.NOT_FOUND);
             responseBody.put("status", "fileIsEmpty");
             return new ResponseEntity<>(responseBody, HttpStatusCode.valueOf(400));
@@ -171,7 +178,6 @@ public class ClientUpploadController {
         if (clientsStateUpload.get(id) == States.NOT_FOUND) {
             log.error("NOT FOUND");
             body.put("state", States.NOT_FOUND.toString());
-            body.put("url", "/filenotfound");
         }
         else if (clientsStateUpload.get(id) == States.FINISHED){
             log.error("FINISHED");
@@ -188,7 +194,7 @@ public class ClientUpploadController {
             }
             else {
                 log.error("PUT PROGRESS = " + myCrypto.getEncryptProgress());
-                body.put("progress", myCrypto.getEncryptProgress());
+                body.put("progress", (float) myCrypto.getEncryptProgress());
             }
             body.put("state", States.WORKING.toString());
         }

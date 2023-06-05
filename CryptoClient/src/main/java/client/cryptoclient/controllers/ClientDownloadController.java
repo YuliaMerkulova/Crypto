@@ -82,19 +82,31 @@ public class ClientDownloadController {
         return new ResponseEntity<>(HttpStatusCode.valueOf(200));
     }
 
-    @GetMapping("/download{id}") // ловим с html какой файлик мы хотим скачать и отправляем этот запрос на сервер
-    public ResponseEntity<Object> wantDownloadFile(Model model, @PathVariable("id") Integer id) {
+    @GetMapping("/download") // ловим с html какой файлик мы хотим скачать и отправляем этот запрос на сервер
+    public ResponseEntity<Object> wantDownloadFile() {
         HashMap<String, Integer> body = new HashMap<>();
-        //model.addAttribute("fileId", id);
-        //model.addAttribute("title", "Download: " + id);
         int myId;
         do {
             myId = randomizer.nextInt();
         } while(myCiphers.containsKey(myId));
-        model.addAttribute("myId", myId);
+        body.put("myId", myId);
+        log.info("ID = " + myId);
         log.info("Начинаем работу по скачиванию!");
         clientsStateDownload.put(myId, States.WAITING);
-        return "download";
+        ExecutorService service = Executors.newFixedThreadPool(1);
+        Integer finalId = myId;
+        service.submit(() -> {
+            try {
+                Thread.sleep(3600000);
+                clientsStateDownload.remove(finalId);
+                myCiphers.remove(finalId);
+            }
+            catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+        service.shutdown();
+        return new ResponseEntity<>(body, HttpStatusCode.valueOf(200));
     }
 
 

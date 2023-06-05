@@ -16,8 +16,9 @@ public class MyRecord {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
-    @Lob
-    private byte[] file;
+//    @Lob
+//    private byte[] file;
+    private int salt;
     String key_;
 
     String fileName;
@@ -26,13 +27,13 @@ public class MyRecord {
 
     Float size;
     private Date dateUploading;
-    public MyRecord(byte[] myFile, String myKey, String fileName_, String IV, String Mode){
-        file = myFile;
+    public MyRecord(int mySalt, Float size,  String myKey, String fileName, String IV, String Mode){
+        salt = mySalt;
         key_ = myKey;
-        fileName = fileName_;
+        this.fileName = fileName;
         this.IV = IV;
         this.Mode = Mode;
-        this.size = ((float)myFile.length / 1024);
+        this.size = size;
         dateUploading = new Date();
     }
 

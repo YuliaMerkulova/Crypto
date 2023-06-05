@@ -18,13 +18,16 @@ import org.springframework.web.multipart.MultipartFile;
 import server.cryptoserver.algorithms.BenalohCipher;
 import server.cryptoserver.algorithms.PublicKey;
 import server.cryptoserver.models.MyRecord;
+import server.cryptoserver.models.SaltContainer;
 import server.cryptoserver.models.Selector;
 import server.cryptoserver.repository.RecordRepository;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,7 +72,6 @@ public class ServerController {
 
     @GetMapping("/getfiles")
     public ResponseEntity<Object> getFiles(){
-
         List<Selector> info = recordRepository.findAllFiles();
         return new ResponseEntity<>(info, HttpStatusCode.valueOf(200));
     }
@@ -97,8 +99,16 @@ public class ServerController {
         log.info("Создаем заголовочки");
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-
-        ByteArrayResource resource = new ByteArrayResource(record.getFile()){
+        Path path = Path.of("D:\\6sem\\uploads\\" + record.getFileName() + "." + record.getSalt());
+        byte[] bytes = new byte[0];
+        try {
+            bytes = Files.readAllBytes(path);
+        }
+        catch (IOException e){
+            log.error("CANT READ FILE");
+            return ResponseEntity.status(300).build();
+        }
+        ByteArrayResource resource = new ByteArrayResource(bytes){
             @Override
             public String getFilename(){return record.getFileName();}
         };
@@ -114,8 +124,12 @@ public class ServerController {
         log.info("Собираемся отправить");
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
         var response = restTemplate.postForEntity("http://localhost:8081/downloadFile", requestEntity, Object.class);
-
+        log.info("RESPONSE {}", response.getStatusCode().toString());
         return new ResponseEntity<>(HttpStatusCode.valueOf(200));
+    }
+
+    public boolean anyMatch(List<SaltContainer> salts, int salt){
+        return salts.stream().anyMatch(x -> x.salt == salt);
     }
 
     @PostMapping("/upload")
@@ -128,7 +142,19 @@ public class ServerController {
         BigInteger[] encIV = objectMapper.readValue(IV, BigInteger[].class);
         int[] decryptedKey = new int[0];
         int[] decryptedIV = new int[0];
-        if (clients.containsKey(id)){
+        var salts = recordRepository.findAllSalt();
+
+        int mySalt;
+        do {
+            mySalt = randomizer.nextInt();
+        } while (anyMatch(salts, mySalt));
+        log.info("Transferring file: " + file.getOriginalFilename() + " to " + Path.of("uploads/", file.getOriginalFilename(), ".", String.valueOf(mySalt)).toString());
+        Path filePath = Path.of("D:\\6sem\\uploads\\" + file.getOriginalFilename() + "." + mySalt);
+//        Files.createFile(filePath);
+//        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        file.transferTo(filePath.toFile());
+        log.info("Transferred file");
+        if (clients.containsKey(id)) {
             BenalohCipher benalohCipher = clients.get(id);
             clients.remove(id);
             decryptedKey = benalohCipher.decryptKey(encKey);
@@ -138,13 +164,12 @@ public class ServerController {
 
         String keyString = new String(intArrayToByte(decryptedKey), StandardCharsets.ISO_8859_1);
         String IVString = new String(intArrayToByte(decryptedIV), StandardCharsets.ISO_8859_1);
-        byte[] fileRec = file.getBytes();
-        MyRecord record = new MyRecord(fileRec, keyString, file.getOriginalFilename(), IVString, mode);
-        log.error("SIZe" +  fileRec.length);
+//        byte[] fileRec = file.getBytes();
+        MyRecord record = new MyRecord(mySalt, (float) (file.getSize())/1024,keyString, file.getOriginalFilename(), IVString, mode);
+//        log.error("SIZe" + fileRec.length);
         try {
             recordRepository.save(record);
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             return new ResponseEntity<>(HttpStatusCode.valueOf(300));
         }
         log.info("save file");

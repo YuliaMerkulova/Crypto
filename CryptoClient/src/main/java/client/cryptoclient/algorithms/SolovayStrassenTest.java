@@ -70,7 +70,7 @@ public class SolovayStrassenTest implements PrimeChecker{
         //избавление от четности
         BigInteger t = BigInteger.valueOf(0);
         while (!a.equals(BigInteger.ZERO)) {
-            while (a.mod(BigInteger.TWO).equals(BigInteger.ZERO)) {
+            while (a.mod(BigInteger.TWO).equals(BigInteger.ZERO) && !a.equals(BigInteger.ZERO)) {
                 a = a.divide(BigInteger.TWO);
                 t = t.add(BigInteger.ONE);
             }

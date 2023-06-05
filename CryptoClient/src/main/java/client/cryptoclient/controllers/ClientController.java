@@ -70,10 +70,6 @@ public class ClientController {
 
         return "MainPage";
     }
-    @GetMapping("/filenotfound")
-    public String fileNotFount(Model model){
-        return "NotFound";
-    }
 
     public static int[] generateKey(int len) {  // len = 4/6/8
         int[] key = new int[len];
