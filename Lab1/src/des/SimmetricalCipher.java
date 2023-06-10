@@ -46,14 +46,13 @@ public class SimmetricalCipher {
     }
 
     public void encryptData(String file, String outFile) {
-        // TODO: add mode matcher
-        concreteMode.reset();
         byte[] buffer = new byte[80000];
         int len;
         try (FileInputStream fileInputStream = new FileInputStream(file);
              FileOutputStream fileOutputStream = new FileOutputStream(outFile)) {
             int length =  (this.mode == des.ModesCipher.RD) ? 79984 : (this.mode == des.ModesCipher.RDH) ? 79976 : 79992;
             while ((len = fileInputStream.read(buffer, 0, length)) > 0) {
+                concreteMode.reset();
                 int last = len % 8;
                 Arrays.fill(buffer, len, len + 8 - last, (byte) (8 - last));
                 fileOutputStream.write(concreteMode.encrypt(buffer, len + 8 - last), 0 , len + 8 - last);
@@ -66,16 +65,17 @@ public class SimmetricalCipher {
 
     }
     public void decryptData(String file, String outFile) {
-        concreteMode.reset();
         byte[] buffer = new byte[80000];
         int len;
         try (FileInputStream fileInputStream = new FileInputStream(file);
              FileOutputStream fileOutputStream = new FileOutputStream(outFile)) {
             while ((len = fileInputStream.read(buffer)) > 0) {
+                concreteMode.reset();
                 System.out.println("dec");
                 byte[] newBuf = concreteMode.decrypt(buffer, len);
-                int last = newBuf[len - 1];
-                fileOutputStream.write(newBuf, 0 , len - last);
+                var shift = ((this.mode == des.ModesCipher.RD) ? 8 : (this.mode == des.ModesCipher.RDH) ? 16 : 0);
+                int last = newBuf[len - 1] & 0xff;
+                fileOutputStream.write(newBuf, 0 , len - last - shift);
             }
         }
         catch  (IOException e){
